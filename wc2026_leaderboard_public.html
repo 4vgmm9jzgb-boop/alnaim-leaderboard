@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alnaim World Cup Tournament – Live Leaderboard</title>
+<meta http-equiv="refresh" content="120">
+<!-- v1781091994 -->
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#080010;font-family:'Roboto',sans-serif;min-height:100vh;}
+.header{background:linear-gradient(135deg,#0d001a 0%,#200040 40%,#380070 70%,#1a0040 100%);padding:20px 28px 16px;display:flex;align-items:center;gap:18px;border-bottom:4px solid #00ffff;}
+.trophy{font-size:44px;}
+.htitles h1{font-family:'Oswald',sans-serif;font-size:26px;font-weight:700;color:#fff;letter-spacing:2px;text-transform:uppercase;}
+.htitles h2{font-family:'Oswald',sans-serif;font-size:12px;color:#00ffff;letter-spacing:4px;text-transform:uppercase;}
+.hflags{margin-left:auto;font-size:28px;display:flex;gap:8px;}
+
+.live-badge{display:inline-flex;align-items:center;gap:6px;background:#1a0000;border:1px solid #7700ff;border-radius:20px;padding:4px 14px;font-size:11px;color:#bb66ff;font-family:'Oswald',sans-serif;letter-spacing:2px;text-transform:uppercase;margin:12px 24px 0;}
+.live-dot{width:7px;height:7px;border-radius:50%;background:#7700ff;animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+.lb-wrap{padding:14px 20px 32px;}
+.lb-title{font-family:'Oswald',sans-serif;font-size:20px;color:#00ffff;letter-spacing:3px;text-transform:uppercase;margin-bottom:6px;text-align:center;}
+.last-updated{text-align:center;font-size:11px;color:#555;margin-bottom:16px;}
+.refresh-btn{display:block;margin:0 auto 16px;font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;background:none;border:1px solid #00ffff;color:#00ffff;padding:7px 18px;border-radius:5px;cursor:pointer;}
+
+/* SCORING LEGEND */
+.legend{background:#0a0015;border:1px solid #7700ff33;border-radius:8px;padding:12px 16px;margin:0 20px 16px;display:flex;gap:16px;flex-wrap:wrap;justify-content:center;}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:#888;}
+.legend-pts{font-family:'Oswald',sans-serif;font-size:15px;font-weight:700;}
+.p3{color:#FFD700;}.p1{color:#4CAF50;}.p0{color:#555;}
+
+/* LEADERBOARD ROWS */
+.lb-row{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:8px;margin-bottom:8px;border:1px solid #7700ff33;background:#100020;transition:transform 0.2s;}
+.lb-row:hover{transform:translateX(4px);}
+.lb-row.top1{border-color:#FFD700;background:#1a1500;}
+.lb-row.top2{border-color:#C0C0C0;background:#161616;}
+.lb-row.top3{border-color:#CD7F32;background:#160d00;}
+.lb-rank{font-family:'Oswald',sans-serif;font-size:26px;font-weight:700;min-width:36px;text-align:center;}
+.lb-rank.r1{color:#FFD700;}.lb-rank.r2{color:#C0C0C0;}.lb-rank.r3{color:#CD7F32;}.lb-rank.rn{color:#444;}
+.lb-medal{font-size:26px;min-width:30px;}
+.lb-name{font-family:'Oswald',sans-serif;font-size:20px;color:#fff;flex:1;letter-spacing:1px;}
+.lb-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
+.lb-total{font-family:'Oswald',sans-serif;font-size:28px;font-weight:700;color:#00ffff;}
+.lb-breakdown{display:flex;gap:10px;font-size:10px;color:#7700ff;flex-wrap:wrap;justify-content:flex-end;}
+.lb-breakdown span{background:#100030;padding:2px 6px;border-radius:3px;border:1px solid #7700ff33;}
+
+/* PTS BAR */
+.pts-bar-wrap{width:80px;}
+.pts-bar{height:4px;background:#333;border-radius:2px;overflow:hidden;margin-top:4px;}
+.pts-bar-fill{height:100%;background:linear-gradient(90deg,#7700ff,#00ffff);border-radius:2px;transition:width 0.6s;}
+
+.empty{text-align:center;color:#555;font-size:14px;padding:40px 20px;}
+.status-bar{padding:6px 24px;font-size:11px;display:flex;align-items:center;gap:8px;background:#050008;border-bottom:1px solid #7700ff22;}
+.status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.status-dot.ok{background:#00cc44;}.status-dot.loading{background:#7700ff;animation:pulse 1s infinite;}.status-dot.err{background:#cc0000;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="trophy">🏆</div>
+  <div class="htitles">
+    <h1>Alnaim World Cup Tournament</h1>
+    <h2>Live Leaderboard · 2026</h2>
+  </div>
+  <div class="hflags">🇺🇸🇨🇦🇲🇽</div>
+</div>
+
+<div class="status-bar">
+  <div class="status-dot loading" id="statusDot"></div>
+  <span id="statusText">Loading leaderboard...</span>
+</div>
+
+<div class="live-badge">
+  <div class="live-dot"></div> LIVE · Auto-refreshes every 2 min
+</div>
+
+<div class="lb-wrap">
+  <div class="lb-title">🏅 Tournament Standings</div>
+  <div class="last-updated" id="lastUpdated"></div>
+  <button class="refresh-btn" onclick="loadLeaderboard()">🔄 Refresh Now</button>
+
+  <div class="legend">
+    <div class="legend-item"><span class="legend-pts p3">+3</span> Exact score</div>
+    <div class="legend-item"><span class="legend-pts p1">+1</span> Correct result</div>
+    <div class="legend-item"><span class="legend-pts p1">+1</span> Correct KO winner</div>
+    <div class="legend-item"><span class="legend-pts p1">+1</span> Correct standing position</div>
+    <div class="legend-item"><span class="legend-pts p0">0</span> Wrong</div>
+  </div>
+
+  <div id="leaderboardContent"></div>
+</div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxaEuGAR1gfrEqfO9w0Gp6XzkETFW67HU8ASaWVsasabpaeOxlHV7q8tT7vs_-fvnwZ/exec';
+
+function setStatus(msg, state) {
+  document.getElementById('statusText').textContent = msg;
+  document.getElementById('statusDot').className = 'status-dot ' + state;
+}
+
+async function loadLeaderboard() {
+  setStatus('Loading...', 'loading');
+  try {
+    const res = await fetch(SCRIPT_URL + '?action=getLeaderboard&t=' + Date.now());
+    const data = await res.json();
+    renderLeaderboard(data.leaderboard || []);
+    setStatus('Live · Last refreshed: ' + new Date().toLocaleTimeString(), 'ok');
+    document.getElementById('lastUpdated').textContent = 'Last updated: ' + new Date().toLocaleString();
+  } catch(e) {
+    setStatus('Error loading ❌', 'err');
+    document.getElementById('leaderboardContent').innerHTML =
+      '<div class="empty">Could not load data. Check back soon!</div>';
+  }
+}
+
+function renderLeaderboard(lb) {
+  const content = document.getElementById('leaderboardContent');
+  if (!lb.length) {
+    content.innerHTML = '<div class="empty">🏆 No scores yet!<br><br>The tournament admin hasn\'t entered match results yet.<br>Check back after June 11! ⚽</div>';
+    return;
+  }
+  const medals = ['🥇','🥈','🥉'];
+  const rc = ['r1','r2','r3'];
+  const topCls = ['top1','top2','top3'];
+  const maxPts = Math.max(...lb.map(r => Number(r.total)||0), 1);
+
+  content.innerHTML = lb.map((r, i) => `
+    <div class="lb-row ${topCls[i]||''}">
+      <div class="lb-rank ${rc[i]||'rn'}">${i+1}</div>
+      <div class="lb-medal">${medals[i]||'🏅'}</div>
+      <div style="flex:1;">
+        <div class="lb-name">${r.name}</div>
+        <div class="lb-breakdown">
+          <span>⚽ GS: ${r.gsMatchPts||0}pts</span>
+          <span>📊 St: ${r.gsStandingPts||0}pts</span>
+          <span>🏆 KO: ${r.koPts||0}pts</span>
+        </div>
+        <div class="lb-breakdown" style="margin-top:3px;">
+          <span>🎯 Exact: ${(Number(r.gsExact)||0)+(Number(r.koExact)||0)}</span>
+          <span>✅ Correct: ${(Number(r.gsCorrect)||0)+(Number(r.koCorrect)||0)}</span>
+          <span>🏆 KO Winners: ${Number(r.koWinner)||0}</span>
+        </div>
+        <div class="pts-bar-wrap" style="width:100%;margin-top:4px;">
+          <div class="pts-bar">
+            <div class="pts-bar-fill" style="width:${Math.round(Number(r.total)/maxPts*100)}%"></div>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center;min-width:60px;">
+        <div class="lb-total">${r.total}</div>
+        <div style="font-size:9px;color:#7700ff;letter-spacing:1px;">POINTS</div>
+      </div>
+    </div>`).join('');
+}
+
+loadLeaderboard();
+</script>
+</body>
+</html>

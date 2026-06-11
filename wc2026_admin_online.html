@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alnaim WC2026 — Admin Panel</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#080010;font-family:'Roboto',sans-serif;min-height:100vh;}
+.header{background:linear-gradient(135deg,#0d001a,#200040,#380070,#1a0040);padding:18px 28px;display:flex;align-items:center;gap:16px;border-bottom:4px solid #00ffff;}
+.trophy{font-size:40px;}
+.htitles h1{font-family:'Oswald',sans-serif;font-size:24px;font-weight:700;color:#fff;letter-spacing:2px;text-transform:uppercase;}
+.htitles h2{font-family:'Oswald',sans-serif;font-size:12px;color:#00ffff;letter-spacing:4px;text-transform:uppercase;}
+.hflags{margin-left:auto;font-size:26px;display:flex;gap:6px;}
+
+/* TABS */
+.tabs{display:flex;background:#0a0015;border-bottom:2px solid #7700ff;}
+.tab{flex:1;padding:12px;text-align:center;font-family:'Oswald',sans-serif;font-size:13px;font-weight:700;color:#555;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border-bottom:3px solid transparent;}
+.tab.active{color:#00ffff;border-bottom:3px solid #00ffff;background:#100020;}
+.tab:hover:not(.active){color:#bb66ff;}
+
+/* PANELS */
+.panel{display:none;padding:20px;}
+.panel.active{display:block;}
+
+/* SECTION TITLES */
+.sec-title{font-family:'Oswald',sans-serif;font-size:14px;color:#00ffff;letter-spacing:3px;text-transform:uppercase;padding:10px 0 8px;border-bottom:1px solid #7700ff33;margin-bottom:14px;}
+
+/* CARDS */
+.card{background:#100020;border:1px solid #7700ff33;border-radius:8px;padding:16px;margin-bottom:12px;}
+
+/* SCORE INPUT ROWS */
+.match-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #7700ff11;}
+.match-row:last-child{border-bottom:none;}
+.grp-badge{font-size:9px;background:#7700ff;color:#fff;border-radius:3px;padding:2px 5px;min-width:24px;text-align:center;flex-shrink:0;}
+.ko-badge{font-size:9px;background:#200040;color:#00ffff;border:1px solid #7700ff;border-radius:3px;padding:2px 5px;min-width:36px;text-align:center;flex-shrink:0;}
+.team-name{flex:1;font-size:11px;color:#e0c0ff;text-transform:uppercase;font-weight:600;}
+.team-name.right{text-align:right;}
+.score-inp{width:38px;height:32px;background:#0d0020;border:2px solid #7700ff;border-radius:4px;color:#fff;font-size:16px;font-weight:700;text-align:center;outline:none;font-family:'Oswald',sans-serif;-moz-appearance:textfield;appearance:textfield;}
+.score-inp::-webkit-inner-spin-button,.score-inp::-webkit-outer-spin-button{-webkit-appearance:none;}
+.score-inp:focus{border-color:#00ffff;}
+.score-inp.filled{border-color:#00ffff;color:#00ffff;}
+.sep{font-size:11px;color:#7700ff;font-weight:700;}
+.flag-sm{font-size:16px;}
+
+/* QUALIFIER SELECTOR */
+.qual-sel{background:#0d0020;border:1px solid #7700ff;border-radius:4px;color:#00ffff;font-size:11px;padding:3px 6px;font-family:'Oswald',sans-serif;outline:none;display:none;}
+
+/* STANDINGS GRID */
+.standings-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:16px;}
+.group-card{background:#100020;border:1px solid #7700ff33;border-radius:6px;overflow:hidden;}
+.group-header{background:#200040;padding:6px 10px;font-family:'Oswald',sans-serif;font-size:12px;color:#00ffff;letter-spacing:2px;}
+.standing-row{display:flex;align-items:center;gap:8px;padding:5px 10px;border-bottom:1px solid #7700ff11;font-size:11px;}
+.standing-row:last-child{border-bottom:none;}
+.pos-num{font-family:'Oswald',sans-serif;font-size:14px;color:#7700ff;min-width:16px;}
+.standing-team{flex:1;color:#e0c0ff;}
+.standing-pts{font-family:'Oswald',sans-serif;font-size:14px;color:#00ffff;}
+
+/* PLAYERS */
+.player-row{display:flex;align-items:center;gap:10px;padding:8px 12px;background:#100020;border:1px solid #7700ff33;border-radius:6px;margin-bottom:8px;}
+.player-name{font-family:'Oswald',sans-serif;font-size:16px;color:#fff;flex:1;}
+.player-pts{font-family:'Oswald',sans-serif;font-size:22px;color:#00ffff;}
+.player-detail{font-size:10px;color:#7700ff;}
+
+/* BUTTONS */
+.btn{font-family:'Oswald',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:9px 20px;border-radius:6px;cursor:pointer;border:none;transition:transform 0.1s;}
+.btn:active{transform:scale(0.97);}
+.btn-cyan{background:linear-gradient(135deg,#004040,#00ffff);color:#000;}
+.btn-purple{background:linear-gradient(135deg,#380070,#7700ff);color:#fff;}
+.btn-green{background:linear-gradient(135deg,#004000,#00cc44);color:#fff;}
+.btn-red{background:linear-gradient(135deg,#400000,#cc0000);color:#fff;}
+.btn:hover{opacity:0.9;}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+
+/* UPLOAD AREA */
+.upload-area{border:2px dashed #7700ff;border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:border-color 0.2s;margin-bottom:14px;}
+.upload-area:hover{border-color:#00ffff;}
+.upload-area input{display:none;}
+.upload-text{font-size:13px;color:#bb66ff;}
+.uploaded-list{font-size:11px;color:#00ffff;margin-top:8px;}
+
+/* STATUS */
+.status{font-size:12px;padding:8px 14px;border-radius:5px;margin-top:8px;}
+.status.ok{background:#001a00;color:#00cc44;border:1px solid #00cc4444;}
+.status.err{background:#1a0000;color:#ff4444;border:1px solid #ff444444;}
+.status.info{background:#001a1a;color:#00ffff;border:1px solid #00ffff44;}
+
+/* LEADERBOARD */
+.lb-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;margin-bottom:8px;border:1px solid #7700ff33;background:#100020;}
+.lb-row.top1{border-color:#FFD700;background:#1a1500;}
+.lb-row.top2{border-color:#C0C0C0;background:#161616;}
+.lb-row.top3{border-color:#CD7F32;background:#160d00;}
+.lb-rank{font-family:'Oswald',sans-serif;font-size:24px;font-weight:700;min-width:32px;text-align:center;}
+.lb-rank.r1{color:#FFD700;}.lb-rank.r2{color:#C0C0C0;}.lb-rank.r3{color:#CD7F32;}.lb-rank.rn{color:#555;}
+.lb-name{font-family:'Oswald',sans-serif;font-size:18px;color:#fff;flex:1;}
+.lb-breakdown{display:flex;gap:12px;font-size:10px;color:#7700ff;}
+.lb-total{font-family:'Oswald',sans-serif;font-size:24px;color:#00ffff;font-weight:700;}
+
+/* MATCH GRID */
+.matches-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;}
+.day-block{background:#100020;border:1px solid #7700ff33;border-radius:6px;overflow:hidden;}
+.day-title{background:#0a0015;padding:5px 10px;font-family:'Oswald',sans-serif;font-size:11px;color:#00ffff;letter-spacing:3px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:#100020;border:2px solid #00ffff;border-radius:7px;padding:10px 18px;font-family:'Oswald',sans-serif;font-size:13px;color:#fff;letter-spacing:1px;z-index:9999;transform:translateY(80px);opacity:0;transition:all 0.3s;}
+.toast.show{transform:translateY(0);opacity:1;}
+
+.sub-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+.sub-tab{font-family:'Oswald',sans-serif;font-size:11px;padding:5px 14px;border-radius:20px;cursor:pointer;border:1px solid #7700ff44;color:#7700ff;background:none;}
+.sub-tab.active{background:#7700ff;color:#fff;border-color:#7700ff;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="trophy">🏆</div>
+  <div class="htitles">
+    <h1>Alnaim World Cup Tournament</h1>
+    <h2>Admin Panel — Score Entry & Leaderboard</h2>
+  </div>
+  <div class="hflags">🇺🇸🇨🇦🇲🇽</div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('scores')">⚽ Real Scores</div>
+  <div class="tab" onclick="switchTab('players')">👥 Players</div>
+  <div class="tab" onclick="switchTab('leaderboard')">🏅 Leaderboard</div>
+</div>
+
+<!-- ═══ SCORES TAB ═══ -->
+<div class="panel active" id="tab-scores">
+  <div class="sub-tabs">
+    <div class="sub-tab active" onclick="switchSubTab('gs')">⚽ Group Stage (72)</div>
+    <div class="sub-tab" onclick="switchSubTab('r32')">🔥 R32</div>
+    <div class="sub-tab" onclick="switchSubTab('r16')">⚡ R16</div>
+    <div class="sub-tab" onclick="switchSubTab('qf')">🎯 QF</div>
+    <div class="sub-tab" onclick="switchSubTab('sf')">🔥 SF</div>
+    <div class="sub-tab" onclick="switchSubTab('final')">🏆 Final</div>
+    <div class="sub-tab" onclick="switchSubTab('standings')">📊 Standings</div>
+  </div>
+
+  <!-- Group Stage Scores -->
+  <div id="sub-gs">
+    <div class="sec-title">⚽ Group Stage — Enter Real Scores</div>
+    <div class="btn-row">
+      <button class="btn btn-cyan" onclick="saveAllScores()">💾 Save All to Sheet</button>
+      <button class="btn btn-purple" onclick="recalcAll()">🔄 Recalculate Leaderboard</button>
+      <button class="btn btn-red" onclick="resetAllScores()">🗑 Reset All Scores</button>
+    </div>
+    <div id="gsMatchesContainer"></div>
+  </div>
+
+  <!-- KO Rounds -->
+  <div id="sub-r32" style="display:none;">
+    <div class="sec-title">🔥 Round of 32 — Real Scores</div>
+    <div id="r32Container"></div>
+  </div>
+  <div id="sub-r16" style="display:none;">
+    <div class="sec-title">⚡ Round of 16 — Real Scores</div>
+    <div id="r16Container"></div>
+  </div>
+  <div id="sub-qf" style="display:none;">
+    <div class="sec-title">🎯 Quarter Finals — Real Scores</div>
+    <div id="qfContainer"></div>
+  </div>
+  <div id="sub-sf" style="display:none;">
+    <div class="sec-title">🔥 Semi Finals — Real Scores</div>
+    <div id="sfContainer"></div>
+  </div>
+  <div id="sub-final" style="display:none;">
+    <div class="sec-title">🏆 Final & 3rd Place — Real Scores</div>
+    <div id="finalContainer"></div>
+  </div>
+
+  <!-- Standings -->
+  <div id="sub-standings" style="display:none;">
+    <div class="sec-title">📊 Real Group Standings — Enter Final Positions</div>
+    <p style="font-size:12px;color:#bb66ff;margin-bottom:14px;">Enter the actual final standings for each group (used for standings bonus points)</p>
+    <div id="standingsContainer"></div>
+  </div>
+</div>
+
+<!-- ═══ PLAYERS TAB ═══ -->
+<div class="panel" id="tab-players">
+  <div class="sec-title">👥 Upload Player Prediction Files</div>
+  <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+    <input type="file" id="fileInput" multiple accept=".html" onchange="handleFiles(event)">
+    <div class="upload-text">📁 Click to upload prediction HTML files<br><small style="color:#555;">Upload all your friends' prediction files</small></div>
+    <div class="uploaded-list" id="uploadedList"></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-red" onclick="clearPlayers()">🗑 Clear All Players</button>
+  </div>
+  <div id="playersList"></div>
+</div>
+
+<!-- ═══ LEADERBOARD TAB ═══ -->
+<div class="panel" id="tab-leaderboard">
+  <div class="sec-title">🏅 Tournament Leaderboard</div>
+  <div class="btn-row">
+    <button class="btn btn-cyan" onclick="recalcAll()">🔄 Recalculate All Points</button>
+    <button class="btn btn-green" onclick="saveLeaderboard()">💾 Save to Google Sheet</button>
+    <button class="btn btn-purple" onclick="loadFromSheet()">☁️ Load from Google Sheet</button>
+  </div>
+  <div id="leaderboardStatus" class="status info" style="display:none;"></div>
+  <div id="leaderboardContainer"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxaEuGAR1gfrEqfO9w0Gp6XzkETFW67HU8ASaWVsasabpaeOxlHV7q8tT7vs_-fvnwZ/exec';
+
+// ═══════════════════════════════════════
+// MATCH DATA
+// ═══════════════════════════════════════
+const GS_MATCHES = [
+  {id:1,g:'A',date:'11 Jun',h:'Mexico',hf:'🇲🇽',a:'South Africa',af:'🇿🇦'},
+  {id:2,g:'A',date:'11 Jun',h:'South Korea',hf:'🇰🇷',a:'Czechia',af:'🇨🇿'},
+  {id:3,g:'B',date:'12 Jun',h:'Canada',hf:'🇨🇦',a:'Bosnia & Herz.',af:'🇧🇦'},
+  {id:4,g:'D',date:'12 Jun',h:'USA',hf:'🇺🇸',a:'Paraguay',af:'🇵🇾'},
+  {id:5,g:'B',date:'13 Jun',h:'Qatar',hf:'🇶🇦',a:'Switzerland',af:'🇨🇭'},
+  {id:6,g:'C',date:'13 Jun',h:'Brazil',hf:'🇧🇷',a:'Morocco',af:'🇲🇦'},
+  {id:7,g:'C',date:'13 Jun',h:'Haiti',hf:'🇭🇹',a:'Scotland',af:'🏴󠁧󠁢󠁳󠁣󠁴󠁿'},
+  {id:8,g:'D',date:'14 Jun',h:'Australia',hf:'🇦🇺',a:'Türkiye',af:'🇹🇷'},
+  {id:9,g:'E',date:'14 Jun',h:'Germany',hf:'🇩🇪',a:'Curaçao',af:'🇨🇼'},
+  {id:10,g:'F',date:'14 Jun',h:'Netherlands',hf:'🇳🇱',a:'Japan',af:'🇯🇵'},
+  {id:11,g:'E',date:'14 Jun',h:'Ivory Coast',hf:'🇨🇮',a:'Ecuador',af:'🇪🇨'},
+  {id:12,g:'F',date:'14 Jun',h:'Sweden',hf:'🇸🇪',a:'Tunisia',af:'🇹🇳'},
+  {id:13,g:'H',date:'15 Jun',h:'Spain',hf:'🇪🇸',a:'Cape Verde',af:'🇨🇻'},
+  {id:14,g:'G',date:'15 Jun',h:'Belgium',hf:'🇧🇪',a:'Egypt',af:'🇪🇬'},
+  {id:15,g:'H',date:'15 Jun',h:'Saudi Arabia',hf:'🇸🇦',a:'Uruguay',af:'🇺🇾'},
+  {id:16,g:'G',date:'15 Jun',h:'Iran',hf:'🇮🇷',a:'New Zealand',af:'🇳🇿'},
+  {id:17,g:'I',date:'16 Jun',h:'France',hf:'🇫🇷',a:'Senegal',af:'🇸🇳'},
+  {id:18,g:'I',date:'16 Jun',h:'Iraq',hf:'🇮🇶',a:'Norway',af:'🇳🇴'},
+  {id:19,g:'J',date:'16 Jun',h:'Argentina',hf:'🇦🇷',a:'Algeria',af:'🇩🇿'},
+  {id:20,g:'J',date:'16 Jun',h:'Austria',hf:'🇦🇹',a:'Jordan',af:'🇯🇴'},
+  {id:21,g:'K',date:'17 Jun',h:'Portugal',hf:'🇵🇹',a:'DR Congo',af:'🇨🇩'},
+  {id:22,g:'L',date:'17 Jun',h:'England',hf:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',a:'Croatia',af:'🇭🇷'},
+  {id:23,g:'L',date:'17 Jun',h:'Ghana',hf:'🇬🇭',a:'Panama',af:'🇵🇦'},
+  {id:24,g:'K',date:'17 Jun',h:'Uzbekistan',hf:'🇺🇿',a:'Colombia',af:'🇨🇴'},
+  {id:25,g:'A',date:'18 Jun',h:'Czechia',hf:'🇨🇿',a:'South Africa',af:'🇿🇦'},
+  {id:26,g:'B',date:'18 Jun',h:'Switzerland',hf:'🇨🇭',a:'Bosnia & Herz.',af:'🇧🇦'},
+  {id:27,g:'B',date:'18 Jun',h:'Canada',hf:'🇨🇦',a:'Qatar',af:'🇶🇦'},
+  {id:28,g:'A',date:'18 Jun',h:'Mexico',hf:'🇲🇽',a:'South Korea',af:'🇰🇷'},
+  {id:29,g:'D',date:'19 Jun',h:'USA',hf:'🇺🇸',a:'Australia',af:'🇦🇺'},
+  {id:30,g:'C',date:'19 Jun',h:'Scotland',hf:'🏴󠁧󠁢󠁳󠁣󠁴󠁿',a:'Morocco',af:'🇲🇦'},
+  {id:31,g:'C',date:'19 Jun',h:'Brazil',hf:'🇧🇷',a:'Haiti',af:'🇭🇹'},
+  {id:32,g:'D',date:'19 Jun',h:'Türkiye',hf:'🇹🇷',a:'Paraguay',af:'🇵🇾'},
+  {id:33,g:'F',date:'20 Jun',h:'Netherlands',hf:'🇳🇱',a:'Sweden',af:'🇸🇪'},
+  {id:34,g:'E',date:'20 Jun',h:'Germany',hf:'🇩🇪',a:'Ivory Coast',af:'🇨🇮'},
+  {id:35,g:'E',date:'20 Jun',h:'Ecuador',hf:'🇪🇨',a:'Curaçao',af:'🇨🇼'},
+  {id:36,g:'F',date:'20 Jun',h:'Tunisia',hf:'🇹🇳',a:'Japan',af:'🇯🇵'},
+  {id:37,g:'H',date:'21 Jun',h:'Spain',hf:'🇪🇸',a:'Saudi Arabia',af:'🇸🇦'},
+  {id:38,g:'G',date:'21 Jun',h:'Belgium',hf:'🇧🇪',a:'Iran',af:'🇮🇷'},
+  {id:39,g:'H',date:'21 Jun',h:'Uruguay',hf:'🇺🇾',a:'Cape Verde',af:'🇨🇻'},
+  {id:40,g:'G',date:'21 Jun',h:'New Zealand',hf:'🇳🇿',a:'Egypt',af:'🇪🇬'},
+  {id:41,g:'J',date:'22 Jun',h:'Argentina',hf:'🇦🇷',a:'Austria',af:'🇦🇹'},
+  {id:42,g:'I',date:'22 Jun',h:'France',hf:'🇫🇷',a:'Iraq',af:'🇮🇶'},
+  {id:43,g:'I',date:'22 Jun',h:'Norway',hf:'🇳🇴',a:'Senegal',af:'🇸🇳'},
+  {id:44,g:'J',date:'22 Jun',h:'Jordan',hf:'🇯🇴',a:'Algeria',af:'🇩🇿'},
+  {id:45,g:'K',date:'23 Jun',h:'Portugal',hf:'🇵🇹',a:'Uzbekistan',af:'🇺🇿'},
+  {id:46,g:'L',date:'23 Jun',h:'England',hf:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',a:'Ghana',af:'🇬🇭'},
+  {id:47,g:'L',date:'23 Jun',h:'Panama',hf:'🇵🇦',a:'Croatia',af:'🇭🇷'},
+  {id:48,g:'K',date:'23 Jun',h:'Colombia',hf:'🇨🇴',a:'DR Congo',af:'🇨🇩'},
+  {id:49,g:'B',date:'24 Jun',h:'Switzerland',hf:'🇨🇭',a:'Canada',af:'🇨🇦'},
+  {id:50,g:'B',date:'24 Jun',h:'Bosnia & Herz.',hf:'🇧🇦',a:'Qatar',af:'🇶🇦'},
+  {id:51,g:'C',date:'24 Jun',h:'Scotland',hf:'🏴󠁧󠁢󠁳󠁣󠁴󠁿',a:'Brazil',af:'🇧🇷'},
+  {id:52,g:'C',date:'24 Jun',h:'Morocco',hf:'🇲🇦',a:'Haiti',af:'🇭🇹'},
+  {id:53,g:'A',date:'24 Jun',h:'Czechia',hf:'🇨🇿',a:'Mexico',af:'🇲🇽'},
+  {id:54,g:'A',date:'24 Jun',h:'South Africa',hf:'🇿🇦',a:'South Korea',af:'🇰🇷'},
+  {id:55,g:'E',date:'25 Jun',h:'Curaçao',hf:'🇨🇼',a:'Ivory Coast',af:'🇨🇮'},
+  {id:56,g:'E',date:'25 Jun',h:'Ecuador',hf:'🇪🇨',a:'Germany',af:'🇩🇪'},
+  {id:57,g:'F',date:'25 Jun',h:'Japan',hf:'🇯🇵',a:'Sweden',af:'🇸🇪'},
+  {id:58,g:'F',date:'25 Jun',h:'Tunisia',hf:'🇹🇳',a:'Netherlands',af:'🇳🇱'},
+  {id:59,g:'D',date:'25 Jun',h:'Türkiye',hf:'🇹🇷',a:'USA',af:'🇺🇸'},
+  {id:60,g:'D',date:'25 Jun',h:'Paraguay',hf:'🇵🇾',a:'Australia',af:'🇦🇺'},
+  {id:61,g:'I',date:'26 Jun',h:'Norway',hf:'🇳🇴',a:'France',af:'🇫🇷'},
+  {id:62,g:'I',date:'26 Jun',h:'Senegal',hf:'🇸🇳',a:'Iraq',af:'🇮🇶'},
+  {id:63,g:'H',date:'26 Jun',h:'Cape Verde',hf:'🇨🇻',a:'Saudi Arabia',af:'🇸🇦'},
+  {id:64,g:'H',date:'26 Jun',h:'Uruguay',hf:'🇺🇾',a:'Spain',af:'🇪🇸'},
+  {id:65,g:'G',date:'26 Jun',h:'Egypt',hf:'🇪🇬',a:'Iran',af:'🇮🇷'},
+  {id:66,g:'G',date:'26 Jun',h:'New Zealand',hf:'🇳🇿',a:'Belgium',af:'🇧🇪'},
+  {id:67,g:'L',date:'27 Jun',h:'Panama',hf:'🇵🇦',a:'England',af:'🏴󠁧󠁢󠁥󠁮󠁧󠁿'},
+  {id:68,g:'L',date:'27 Jun',h:'Croatia',hf:'🇭🇷',a:'Ghana',af:'🇬🇭'},
+  {id:69,g:'K',date:'27 Jun',h:'Colombia',hf:'🇨🇴',a:'Portugal',af:'🇵🇹'},
+  {id:70,g:'K',date:'27 Jun',h:'DR Congo',hf:'🇨🇩',a:'Uzbekistan',af:'🇺🇿'},
+  {id:71,g:'J',date:'27 Jun',h:'Algeria',hf:'🇩🇿',a:'Austria',af:'🇦🇹'},
+  {id:72,g:'J',date:'27 Jun',h:'Jordan',hf:'🇯🇴',a:'Argentina',af:'🇦🇷'}
+];
+
+const KO_MATCHES = {
+  r32: [
+    {id:'r32_73',label:'M73 · 2A vs 2B'},{id:'r32_74',label:'M74 · 1E vs 3rd'},
+    {id:'r32_75',label:'M75 · 1F vs 2C'},{id:'r32_76',label:'M76 · 1C vs 2F'},
+    {id:'r32_77',label:'M77 · 1I vs 3rd'},{id:'r32_78',label:'M78 · 2E vs 2I'},
+    {id:'r32_79',label:'M79 · 1A vs 3rd'},{id:'r32_80',label:'M80 · 1L vs 3rd'},
+    {id:'r32_81',label:'M81 · 1D vs 3rd'},{id:'r32_82',label:'M82 · 1G vs 3rd'},
+    {id:'r32_83',label:'M83 · 2K vs 2L'},{id:'r32_84',label:'M84 · 1H vs 2J'},
+    {id:'r32_85',label:'M85 · 1B vs 3rd'},{id:'r32_86',label:'M86 · 1J vs 2H'},
+    {id:'r32_87',label:'M87 · 1K vs 3rd'},{id:'r32_88',label:'M88 · 2D vs 2G'}
+  ],
+  r16: Array.from({length:8},(_,i)=>({id:`r16_${i+1}`,label:`R16 Match ${i+1}`})),
+  qf:  Array.from({length:4},(_,i)=>({id:`qf_${i+1}`, label:`Quarter Final ${i+1}`})),
+  sf:  [{id:'sf_1',label:'Semi Final 1'},{id:'sf_2',label:'Semi Final 2'}],
+  final:[{id:'final',label:'🏆 THE FINAL'},{id:'third',label:'🥉 3rd Place Match'}]
+};
+
+const GROUPS = ['A','B','C','D','E','F','G','H','I','J','K','L'];
+const GROUP_TEAMS = {
+  A:['Mexico','South Korea','Czechia','South Africa'],
+  B:['Canada','Qatar','Switzerland','Bosnia & Herz.'],
+  C:['Brazil','Morocco','Haiti','Scotland'],
+  D:['USA','Paraguay','Australia','Türkiye'],
+  E:['Germany','Ivory Coast','Ecuador','Curaçao'],
+  F:['Netherlands','Japan','Sweden','Tunisia'],
+  G:['Belgium','Egypt','Iran','New Zealand'],
+  H:['Spain','Cape Verde','Saudi Arabia','Uruguay'],
+  I:['France','Senegal','Iraq','Norway'],
+  J:['Argentina','Algeria','Austria','Jordan'],
+  K:['Portugal','DR Congo','Uzbekistan','Colombia'],
+  L:['England','Croatia','Ghana','Panama']
+};
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let realScores = {}; // {matchId: {h, a, qualifier}} (qualifier = 'h'|'a' for KO draws)
+let realStandings = {}; // {group: [team1, team2, team3, team4]}
+let players = []; // [{name, gsScores:{1:{h,a},...}, gsStandings:{A:[...],...}, koScores:{...}, koQualifiers:{...}}]
+let leaderboard = [];
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+window.onload = () => {
+  loadFromStorage();
+  renderGSMatches();
+  renderKOMatches();
+  renderStandingsInputs();
+  renderPlayers();
+  recalcAll();
+};
+
+function loadFromStorage() {
+  try {
+    const s = localStorage.getItem('alnaim_admin_scores');
+    if (s) realScores = JSON.parse(s);
+    const st = localStorage.getItem('alnaim_admin_standings');
+    if (st) realStandings = JSON.parse(st);
+    const p = localStorage.getItem('alnaim_players');
+    if (p) players = JSON.parse(p);
+  } catch(e) {}
+}
+
+function saveToStorage() {
+  try {
+    localStorage.setItem('alnaim_admin_scores', JSON.stringify(realScores));
+    localStorage.setItem('alnaim_admin_standings', JSON.stringify(realStandings));
+    localStorage.setItem('alnaim_players', JSON.stringify(players));
+  } catch(e) { console.log('localStorage error:', e); }
+}
+
+async function savePlayersToSheet() {
+  if (!players.length) return;
+  try {
+    const payload = {
+      action: 'savePlayers',
+      players: players.map(p => ({
+        name: p.name,
+        gsScores: p.gsScores,
+        gsStandings: p.gsStandings,
+        koScores: p.koScores,
+        koQualifiers: p.koQualifiers
+      }))
+    };
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+  } catch(e) {}
+}
+
+async function loadPlayersFromSheet() {
+  try {
+    const res = await fetch(SCRIPT_URL + '?action=getPlayers&t=' + Date.now());
+    const data = await res.json();
+    if (data.players && data.players.length) {
+      data.players.forEach(p => {
+        const existing = players.findIndex(x => x.name === p.name);
+        if (existing >= 0) players[existing] = p;
+        else players.push(p);
+      });
+      saveToStorage();
+      renderPlayers();
+      return true;
+    }
+  } catch(e) {}
+  return false;
+}
+
+// ═══════════════════════════════════════
+// RENDER SCORE INPUTS
+// ═══════════════════════════════════════
+function renderGSMatches() {
+  const grouped = {};
+  GS_MATCHES.forEach(m => { if (!grouped[m.date]) grouped[m.date] = []; grouped[m.date].push(m); });
+  const container = document.getElementById('gsMatchesContainer');
+  container.innerHTML = '<div class="matches-grid">' + Object.entries(grouped).map(([date, matches]) => `
+    <div class="day-block">
+      <div class="day-title">${date}</div>
+      ${matches.map(m => renderGSRow(m)).join('')}
+    </div>`).join('') + '</div>';
+}
+
+function renderGSRow(m) {
+  const sc = realScores[m.id] || {};
+  const hv = sc.h !== undefined ? sc.h : '';
+  const av = sc.a !== undefined ? sc.a : '';
+  return `<div class="match-row">
+    <span class="grp-badge">${m.g}</span>
+    <span class="flag-sm">${m.hf}</span>
+    <span class="team-name" style="max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.h}</span>
+    <input class="score-inp${hv!==''?' filled':''}" type="number" min="0" max="20" value="${hv}" placeholder="–" id="gs-h-${m.id}" onchange="saveGSScore(${m.id})">
+    <span class="sep">:</span>
+    <input class="score-inp${av!==''?' filled':''}" type="number" min="0" max="20" value="${av}" placeholder="–" id="gs-a-${m.id}" onchange="saveGSScore(${m.id})">
+    <span class="flag-sm">${m.af}</span>
+    <span class="team-name right" style="max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.a}</span>
+  </div>`;
+}
+
+function saveGSScore(id) {
+  const h = document.getElementById(`gs-h-${id}`)?.value;
+  const a = document.getElementById(`gs-a-${id}`)?.value;
+  if (h !== '' && a !== '') {
+    realScores[id] = {h: parseInt(h), a: parseInt(a)};
+    document.getElementById(`gs-h-${id}`).classList.add('filled');
+    document.getElementById(`gs-a-${id}`).classList.add('filled');
+  }
+  saveToStorage();
+}
+
+function renderKOMatches() {
+  Object.entries(KO_MATCHES).forEach(([round, matches]) => {
+    const container = document.getElementById(`${round}Container`);
+    if (!container) return;
+    container.innerHTML = '<div class="matches-grid">' + matches.map(m => renderKORow(m)).join('') + '</div>';
+  });
+}
+
+function renderKORow(m) {
+  const sc = realScores[m.id] || {};
+  const hv = sc.h !== undefined ? sc.h : '';
+  const av = sc.a !== undefined ? sc.a : '';
+  const qual = sc.qualifier || '';
+  const isDraw = hv !== '' && av !== '' && parseInt(hv) === parseInt(av);
+  return `<div class="day-block" style="padding-bottom:8px;">
+    <div class="day-title">${m.label}</div>
+    <div class="match-row" style="padding:8px 10px;">
+      <input class="score-inp${hv!==''?' filled':''}" type="number" min="0" max="20" value="${hv}" placeholder="–" id="ko-h-${m.id}" onchange="saveKOScore('${m.id}')">
+      <span class="sep">:</span>
+      <input class="score-inp${av!==''?' filled':''}" type="number" min="0" max="20" value="${av}" placeholder="–" id="ko-a-${m.id}" onchange="saveKOScore('${m.id}')">
+      <select class="qual-sel" id="ko-qual-${m.id}" onchange="saveKOScore('${m.id}')" style="display:${isDraw?'block':'none'}">
+        <option value="">-- Who qualified? --</option>
+        <option value="h" ${qual==='h'?'selected':''}>Home Team</option>
+        <option value="a" ${qual==='a'?'selected':''}>Away Team</option>
+      </select>
+    </div>
+  </div>`;
+}
+
+function saveKOScore(id) {
+  const h = document.getElementById(`ko-h-${id}`)?.value;
+  const a = document.getElementById(`ko-a-${id}`)?.value;
+  const qual = document.getElementById(`ko-qual-${id}`)?.value;
+  if (h !== '' && a !== '') {
+    const isDraw = parseInt(h) === parseInt(a);
+    realScores[id] = {h: parseInt(h), a: parseInt(a), qualifier: isDraw ? qual : ''};
+    const qualEl = document.getElementById(`ko-qual-${id}`);
+    if (qualEl) qualEl.style.display = isDraw ? 'block' : 'none';
+  }
+  saveToStorage();
+}
+
+function renderStandingsInputs() {
+  const container = document.getElementById('standingsContainer');
+  container.innerHTML = '<div class="standings-grid">' + GROUPS.map(g => {
+    const teams = GROUP_TEAMS[g];
+    const st = realStandings[g] || ['','','',''];
+    return `<div class="group-card">
+      <div class="group-header">GROUP ${g}</div>
+      ${[0,1,2,3].map(pos => `
+      <div class="standing-row">
+        <span class="pos-num">${pos+1}</span>
+        <select style="flex:1;background:#0d0020;border:1px solid #7700ff44;color:#e0c0ff;font-size:11px;padding:3px;border-radius:3px;outline:none;" id="st-${g}-${pos}" onchange="saveStanding('${g}')">
+          <option value="">-- Pick team --</option>
+          ${teams.map(t => `<option value="${t}" ${st[pos]===t?'selected':''}>${t}</option>`).join('')}
+        </select>
+      </div>`).join('')}
+    </div>`;
+  }).join('') + '</div>';
+}
+
+function saveStanding(g) {
+  realStandings[g] = [0,1,2,3].map(pos => document.getElementById(`st-${g}-${pos}`)?.value || '');
+  saveToStorage();
+}
+
+// ═══════════════════════════════════════
+// PLAYERS
+// ═══════════════════════════════════════
+async function handleFiles(event) {
+  // FIRST: load existing players from Google Sheet so we don't lose them
+  showToast('⏳ Loading existing players from sheet...');
+  try {
+    const res = await fetch(SCRIPT_URL + '?action=getLeaderboard&t=' + Date.now());
+    const data = await res.json();
+    const lb = data.leaderboard || [];
+    // We can't restore full prediction data from sheet, but we keep names
+    // New uploads will be scored properly
+  } catch(e) {}
+
+  const files = Array.from(event.target.files);
+  let loaded = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const html = e.target.result;
+      const parsed = parsePredictionFile(html, file.name);
+      if (parsed) {
+        const existing = players.findIndex(p => p.name === parsed.name);
+        if (existing >= 0) players[existing] = parsed;
+        else players.push(parsed);
+        loaded++;
+        if (loaded === files.length) {
+          saveToStorage();
+          renderPlayers();
+          recalcAll();
+          showToast(`✅ Loaded ${loaded} player(s)! Saving to sheet...`);
+          document.getElementById('uploadedList').textContent = players.map(p=>p.name).join(', ');
+          setTimeout(async () => { await savePlayersToSheet(); await saveLeaderboard(); }, 1000);
+        }
+      }
+    };
+    reader.readAsText(file);
+  });
+}
+
+function parsePredictionFile(html, filename) {
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    // NEW FORMAT: exported file has JS variables PLAYER_NAME, GS_SCORES etc
+    // Extract them from script tags
+    const scripts = doc.querySelectorAll('script');
+    let name = '', gsScores = {}, gsStandings = {}, koScores = {}, koQualifiers = {};
+
+    for (const script of scripts) {
+      const text = script.textContent || '';
+      // Extract PLAYER_NAME
+      const nameMatch = text.match(/const PLAYER_NAME = (".*?"|'.*?');/);
+      if (nameMatch) name = JSON.parse(nameMatch[1]);
+      // Extract GS_SCORES
+      const gsMatch = text.match(/const GS_SCORES = ({[\s\S]*?});/);
+      if (gsMatch) { try { gsScores = JSON.parse(gsMatch[1]); } catch(e) {} }
+      // Extract GS_STANDINGS
+      const stMatch = text.match(/const GS_STANDINGS = ({[\s\S]*?});/);
+      if (stMatch) { try { gsStandings = JSON.parse(stMatch[1]); } catch(e) {} }
+      // Extract KO_SCORES
+      const koMatch = text.match(/const KO_SCORES = ({[\s\S]*?});/);
+      if (koMatch) { try { koScores = JSON.parse(koMatch[1]); } catch(e) {} }
+      // Extract KO_QUALIFIERS
+      const qualMatch = text.match(/const KO_QUALIFIERS = ({[\s\S]*?});/);
+      if (qualMatch) { try { koQualifiers = JSON.parse(qualMatch[1]); } catch(e) {} }
+    }
+
+    // Fallback: try old format with input elements
+    if (!name) {
+      const nameEl = doc.querySelector('#playerName');
+      if (nameEl) name = nameEl.value || nameEl.textContent;
+    }
+    if (!name) {
+      const title = doc.querySelector('title')?.textContent || '';
+      const m = title.match(/[–-]\s*(.+)/);
+      if (m) name = m[1].trim();
+    }
+    if (!name) name = filename.replace('.html','').replace('AlnaimWC2026_','').replace(/_predictions?$/i,'').replace(/_/g,' ');
+
+    // If no GS scores from new format, try old input format
+    if (!Object.keys(gsScores).length) {
+      for (let i = 1; i <= 72; i++) {
+        const hEl = doc.querySelector(`input[data-match="${i}"][data-side="h"]`);
+        const aEl = doc.querySelector(`input[data-match="${i}"][data-side="a"]`);
+        const hv = hEl?.getAttribute('value') || hEl?.value;
+        const av = aEl?.getAttribute('value') || aEl?.value;
+        if (hv !== null && hv !== '' && av !== null && av !== '') {
+          gsScores[i] = {h: parseInt(hv), a: parseInt(av)};
+        }
+      }
+    }
+
+    console.log(`Parsed ${name}: GS=${Object.keys(gsScores).length}, KO=${Object.keys(koScores).length}, St=${Object.keys(gsStandings).length}`);
+    return {name, gsScores, koScores, koQualifiers, gsStandings};
+  } catch(e) {
+    console.error('Parse error:', e);
+    return null;
+  }
+}
+
+function clearPlayers() {
+  if (!confirm('Clear all players?')) return;
+  players = [];
+  saveToStorage();
+  renderPlayers();
+  recalcAll();
+}
+
+function renderPlayers() {
+  const container = document.getElementById('playersList');
+  if (!players.length) { container.innerHTML = '<p style="color:#555;font-size:13px;">No players uploaded yet.</p>'; return; }
+  container.innerHTML = players.map((p, i) => `
+    <div class="player-row">
+      <div class="player-name">${p.name}</div>
+      <div>
+        <div class="player-detail">GS: ${Object.keys(p.gsScores||{}).length}/72 matches</div>
+        <div class="player-detail">KO: ${Object.keys(p.koScores||{}).length} matches</div>
+      </div>
+      <button class="btn btn-red" style="padding:5px 12px;font-size:10px;" onclick="removePlayer(${i})">✕ Remove</button>
+    </div>`).join('');
+}
+
+async function removePlayer(i) {
+  const name = players[i].name;
+  if (!confirm(`Remove ${name} from the tournament?`)) return;
+  players.splice(i, 1);
+  saveToStorage();
+  renderPlayers();
+  recalcAll();
+  // Auto save to Google Sheet so leaderboard updates
+  setTimeout(async () => {
+    await saveLeaderboard();
+    showToast(`✅ ${name} removed!`);
+  }, 500);
+}
+
+// ═══════════════════════════════════════
+// SCORING ENGINE
+// ═══════════════════════════════════════
+function scoreGSMatch(pred, real) {
+  if (!pred || !real) return 0;
+  if (pred.h === real.h && pred.a === real.a) return 3; // exact
+  const predResult = pred.h > pred.a ? 'h' : pred.h < pred.a ? 'a' : 'd';
+  const realResult = real.h > real.a ? 'h' : real.h < real.a ? 'a' : 'd';
+  if (predResult === realResult) return 1; // correct result
+  return 0;
+}
+
+function scoreKOMatch(pred, predQual, real, realQual) {
+  if (!pred || !real) return {pts:0, detail:''};
+  let pts = 0;
+  let detail = [];
+
+  // Score (3 or 1 or 0)
+  if (pred.h === real.h && pred.a === real.a) {
+    pts += 3; detail.push('+3 exact');
+  } else {
+    const predResult = pred.h > pred.a ? 'h' : pred.h < pred.a ? 'a' : 'd';
+    const realResult = real.h > real.a ? 'h' : real.h < real.a ? 'a' : 'd';
+    if (predResult === realResult) { pts += 1; detail.push('+1 result'); }
+  }
+
+  // Winner (1pt) — who actually advanced
+  const realWinner = real.h > real.a ? 'h' : real.h < real.a ? 'a' : realQual;
+  const predWinner = pred.h > pred.a ? 'h' : pred.h < pred.a ? 'a' : predQual;
+  if (realWinner && predWinner && realWinner === predWinner) {
+    pts += 1; detail.push('+1 winner');
+  }
+
+  return {pts, detail: detail.join(', ')};
+}
+
+function recalcAll() {
+  leaderboard = players.map(player => {
+    let gsMatchPts = 0, gsStandingPts = 0, koPts = 0;
+    let gsExact = 0, gsCorrect = 0;
+
+    // Score GS matches
+    for (let i = 1; i <= 72; i++) {
+      const pts = scoreGSMatch(player.gsScores?.[i], realScores[i]);
+      gsMatchPts += pts;
+      if (pts === 3) gsExact++;
+      else if (pts === 1) gsCorrect++;
+    }
+
+    // Score GS standings (1pt per correct position per group)
+    GROUPS.forEach(g => {
+      const realSt = realStandings[g];
+      const predSt = player.gsStandings?.[g];
+      if (realSt && predSt) {
+        for (let pos = 0; pos < 4; pos++) {
+          if (realSt[pos] && predSt[pos] && realSt[pos] === predSt[pos]) gsStandingPts++;
+        }
+      }
+    });
+
+    // Score KO matches
+    let koExact = 0, koCorrect = 0, koWinner = 0;
+    const allKOIds = [
+      ...KO_MATCHES.r32.map(m=>m.id),
+      ...KO_MATCHES.r16.map(m=>m.id),
+      ...KO_MATCHES.qf.map(m=>m.id),
+      ...KO_MATCHES.sf.map(m=>m.id),
+      ...KO_MATCHES.final.map(m=>m.id)
+    ];
+    allKOIds.forEach(id => {
+      const {pts, detail} = scoreKOMatch(
+        player.koScores?.[id], player.koQualifiers?.[id],
+        realScores[id], realScores[id]?.qualifier
+      );
+      koPts += pts;
+      if (detail.includes('+3')) koExact++;
+      if (detail.includes('+1 result')) koCorrect++;
+      if (detail.includes('+1 winner')) koWinner++;
+    });
+
+    const total = gsMatchPts + gsStandingPts + koPts;
+    return {
+      name: player.name,
+      gsMatchPts, gsStandingPts, koPts, total,
+      gsExact, gsCorrect, koExact, koCorrect, koWinner
+    };
+  });
+
+  leaderboard.sort((a, b) => b.total - a.total);
+  leaderboard = leaderboard.map((r, i) => ({...r, rank: i+1}));
+  renderLeaderboard();
+}
+
+// ═══════════════════════════════════════
+// LEADERBOARD RENDER
+// ═══════════════════════════════════════
+function renderLeaderboard() {
+  const container = document.getElementById('leaderboardContainer');
+  if (!leaderboard.length) {
+    container.innerHTML = '<p style="color:#555;font-size:13px;">Upload player files and enter real scores first.</p>';
+    return;
+  }
+  const medals = ['🥇','🥈','🥉'];
+  const rankCls = ['r1','r2','r3'];
+  const topCls = ['top1','top2','top3'];
+  container.innerHTML = leaderboard.map((r,i) => `
+    <div class="lb-row ${topCls[i]||''}">
+      <div class="lb-rank ${rankCls[i]||'rn'}">${r.rank}</div>
+      <div style="font-size:22px;">${medals[i]||'🏅'}</div>
+      <div style="flex:1;">
+        <div class="lb-name">${r.name}</div>
+        <div class="lb-breakdown">
+          <span>⚽ GS: ${r.gsMatchPts}pts</span>
+          <span>📊 Standings: ${r.gsStandingPts}pts</span>
+          <span>🏆 KO: ${r.koPts}pts</span>
+        </div>
+        <div class="lb-breakdown" style="margin-top:2px;">
+          <span>Exact: ${r.gsExact+r.koExact}</span>
+          <span>Correct: ${r.gsCorrect+r.koCorrect}</span>
+          <span>KO Winners: ${r.koWinner}</span>
+        </div>
+      </div>
+      <div style="text-align:center;">
+        <div class="lb-total">${r.total}</div>
+        <div style="font-size:9px;color:#7700ff;">POINTS</div>
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════
+// GOOGLE SHEETS
+// ═══════════════════════════════════════
+async function saveAllScores() {
+  showToast('💾 Saving scores...');
+  try {
+    await fetch(SCRIPT_URL + '?action=saveScores', {
+      method:'POST', mode:'no-cors',
+      body: JSON.stringify({scores: realScores, standings: realStandings})
+    });
+    showToast('✅ Scores saved!');
+  } catch(e) { showToast('❌ Save failed'); }
+}
+
+async function loadFromSheet() {
+  const statusEl = document.getElementById('leaderboardStatus');
+  statusEl.style.display = 'block';
+  statusEl.className = 'status info';
+  statusEl.textContent = '☁️ Loading from Google Sheet...';
+  try {
+    const res = await fetch(SCRIPT_URL + '?action=getLeaderboard&t=' + Date.now());
+    const data = await res.json();
+    // Handle both old and new format
+    const lb = data.leaderboard || data.data || [];
+    if (lb.length) {
+      leaderboard = lb.map((r,i) => ({
+        rank: r.rank || i+1,
+        name: r.name || r.Name || '',
+        total: parseInt(r.total || r.Total || 0),
+        gsMatchPts: parseInt(r.gsMatchPts || 0),
+        gsStandingPts: parseInt(r.gsStandingPts || 0),
+        koPts: parseInt(r.koPts || 0),
+        gsExact: parseInt(r.gsExact || r.exact || 0),
+        gsCorrect: parseInt(r.gsCorrect || r.correct || 0),
+        koExact: parseInt(r.koExact || 0),
+        koCorrect: parseInt(r.koCorrect || 0),
+        koWinner: parseInt(r.koWinner || 0)
+      }));
+      renderLeaderboard();
+      statusEl.className = 'status ok';
+      statusEl.textContent = '✅ Loaded ' + leaderboard.length + ' players from Google Sheet!';
+    } else {
+      statusEl.className = 'status err';
+      statusEl.textContent = '⚠️ No leaderboard data in Google Sheet yet.';
+    }
+  } catch(e) {
+    statusEl.className = 'status err';
+    statusEl.textContent = '❌ Failed to load: ' + e.message;
+  }
+}
+
+async function saveLeaderboard() {
+  if (!leaderboard.length) { showToast('⚠️ No leaderboard data'); return; }
+  showToast('💾 Saving leaderboard...');
+  try {
+    // Format to match Apps Script expectations
+    // Sort by total before saving to ensure correct ranks
+    const sorted = [...leaderboard].sort((a,b) => b.total - a.total);
+    const payload = {
+      action: 'saveLeaderboard',
+      leaderboard: sorted.map((r, i) => ({
+        rank: i+1,
+        name: r.name,
+        total: r.total||0,
+        exact: (r.gsExact||0) + (r.koExact||0),
+        correct: (r.gsCorrect||0) + (r.koCorrect||0),
+        wrong: 0,
+        gsMatchPts: r.gsMatchPts||0,
+        gsStandingPts: r.gsStandingPts||0,
+        koPts: r.koPts||0,
+        gsExact: r.gsExact||0,
+        gsCorrect: r.gsCorrect||0,
+        koExact: r.koExact||0,
+        koCorrect: r.koCorrect||0,
+        koWinner: r.koWinner||0
+      }))
+    };
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    showToast('✅ Leaderboard saved! Friends can see it now.');
+  } catch(e) { showToast('❌ Save failed: ' + e.message); }
+}
+
+// ═══════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById(`tab-${name}`).classList.add('active');
+  // Auto-load leaderboard from sheet when tab is opened
+  if (name === 'leaderboard' && !leaderboard.length) {
+    loadFromSheet();
+  }
+}
+
+function switchSubTab(name) {
+  document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('[id^="sub-"]').forEach(p => p.style.display = 'none');
+  event.target.classList.add('active');
+  document.getElementById(`sub-${name}`).style.display = 'block';
+}
+
+
+function resetAllScores() {
+  if (!confirm('⚠️ Reset ALL real scores to empty?\n\nThis will clear all match scores and standings.\nPlayer predictions will NOT be affected.')) return;
+  realScores = {};
+  realStandings = {};
+  saveToStorage();
+  // Re-render all score inputs
+  renderGSMatches();
+  renderKOMatches();
+  renderStandingsInputs();
+  recalcAll();
+  showToast('✅ All scores reset to empty!');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>

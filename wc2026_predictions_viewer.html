@@ -77,11 +77,11 @@ body{background:#080010;font-family:'Roboto',sans-serif;min-height:100vh;color:#
 .m-result.draw{background:#44440022;color:#ffff44;border:1px solid #ffff4433;}
 
 /* KO MATCH */
-.ko-match-row{display:flex;align-items:center;gap:8px;padding:7px 10px;background:#100020;border:1px solid #7700ff33;border-radius:7px;margin-bottom:5px;}
-.ko-num{font-family:'Oswald',sans-serif;font-size:9px;color:#00ffff;min-width:36px;}
-.ko-team{flex:1;font-family:'Oswald',sans-serif;font-size:12px;color:#e0c0ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.ko-score{font-family:'Oswald',sans-serif;font-size:16px;font-weight:700;color:#00ffff;min-width:22px;text-align:center;}
-.ko-winner{font-size:9px;color:#00ffff;background:#00ffff11;border:1px solid #00ffff33;border-radius:3px;padding:1px 6px;font-family:'Oswald',sans-serif;}
+.ko-match-row{display:flex;align-items:center;gap:6px;padding:8px 10px;background:#100020;border:1px solid #7700ff33;border-radius:7px;margin-bottom:5px;flex-wrap:wrap;}
+.ko-num{font-family:'Oswald',sans-serif;font-size:9px;color:#00ffff;min-width:50px;flex-shrink:0;}
+.ko-team{flex:1;font-family:'Oswald',sans-serif;font-size:11px;color:#e0c0ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:80px;}
+.ko-score{font-family:'Oswald',sans-serif;font-size:16px;font-weight:700;color:#00ffff;min-width:24px;text-align:center;flex-shrink:0;}
+.ko-winner{font-size:10px;color:#00cc44;background:#00440011;border:1px solid #00cc4433;border-radius:3px;padding:2px 8px;font-family:'Oswald',sans-serif;width:100%;margin-top:3px;}
 
 .round-label{font-family:'Oswald',sans-serif;font-size:10px;color:#7700ff;letter-spacing:2px;margin:12px 0 6px;padding:4px 8px;background:#0d001a;border-left:3px solid #7700ff;border-radius:0 4px 4px 0;}
 
@@ -245,6 +245,24 @@ function switchPlayer(idx) {
   document.querySelectorAll('.player-view').forEach((v,i) => v.classList.toggle('active', i===idx));
 }
 
+
+const FLAGS = {
+  'Mexico':'🇲🇽','South Korea':'🇰🇷','Czechia':'🇨🇿','South Africa':'🇿🇦',
+  'Canada':'🇨🇦','Qatar':'🇶🇦','Switzerland':'🇨🇭','Bosnia & Herz.':'🇧🇦',
+  'Brazil':'🇧🇷','Morocco':'🇲🇦','Haiti':'🇭🇹','Scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+  'USA':'🇺🇸','Paraguay':'🇵🇾','Australia':'🇦🇺','Türkiye':'🇹🇷',
+  'Germany':'🇩🇪','Ivory Coast':'🇨🇮','Ecuador':'🇪🇨','Curaçao':'🇨🇼',
+  'Netherlands':'🇳🇱','Japan':'🇯🇵','Sweden':'🇸🇪','Tunisia':'🇹🇳',
+  'Belgium':'🇧🇪','Egypt':'🇪🇬','Iran':'🇮🇷','New Zealand':'🇳🇿',
+  'Spain':'🇪🇸','Cape Verde':'🇨🇻','Saudi Arabia':'🇸🇦','Uruguay':'🇺🇾',
+  'France':'🇫🇷','Senegal':'🇸🇳','Iraq':'🇮🇶','Norway':'🇳🇴',
+  'Argentina':'🇦🇷','Algeria':'🇩🇿','Austria':'🇦🇹','Jordan':'🇯🇴',
+  'Portugal':'🇵🇹','DR Congo':'🇨🇩','Uzbekistan':'🇺🇿','Colombia':'🇨🇴',
+  'England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Croatia':'🇭🇷','Ghana':'🇬🇭','Panama':'🇵🇦',
+  'Khalid AlNaim':'👤','Abdullah Alnaim':'👤',
+};
+function getFlag(name) { return FLAGS[name] || '🏳'; }
+
 function renderPlayer(p, idx) {
   const gs = p.gsScores || {};
   const ko = p.koScores || {};
@@ -288,36 +306,103 @@ function renderPlayer(p, idx) {
       ${[0,1,2,3].map(pos => `
         <div class="standing-row">
           <span class="pos-medal">${POS_MEDALS[pos]}</span>
-          <span class="standing-team">${teams[pos] || '–'}</span>
+          <span class="standing-team">${teams[pos] ? getFlag(teams[pos])+' '+teams[pos] : '–'}</span>
         </div>`).join('')}
     </div>`;
   });
   stHtml += '</div>';
 
   // KO matches
+  // Resolve KO team names from player's own standings + Annex C for 3rd place
+  function resolveKOTeams(st, ko, kq) {
+    const f = (g,pos) => { const t=st[g]?.[pos]; return t?{n:t,f:getFlag(t)}:{n:`${pos===0?'1st':pos===1?'2nd':'3rd'} ${g}`,f:'🏳'}; };
+    const w = (id,h,a) => {
+      const sc=ko[id]||{}; if(sc.h===undefined) return h;
+      if(sc.h>sc.a) return h; if(sc.a>sc.h) return a;
+      const q=kq[id]; return q==='h'?h:(q==='a'?a:h);
+    };
+
+    // Get all 3rd place teams sorted by pts/gd/gf
+    const all3 = 'ABCDEFGHIJKL'.split('').map(g => {
+      const t = st[g]?.[2]; return t ? {n:t, f:getFlag(t), g} : {n:`3rd ${g}`, f:'🏳', g};
+    });
+    // Use FIFA Annex C lookup
+    const best8 = all3.slice(); // simplified - use order from standings
+    const comboKey = all3.map(x=>x.g).sort().join('');
+    const annexRow = (typeof FIFA_ANNEX_C !== 'undefined' && FIFA_ANNEX_C[comboKey]) || ['E','F','I','A','H','I','K','L'];
+    const get3 = (idx) => { const g = annexRow[idx]; const t = all3.find(x=>x.g===g); return t || {n:`3rd ${g}`,f:'🏳'}; };
+
+    const t = {
+      r32_73:{h:f('A',1),a:f('B',1)},
+      r32_74:{h:f('E',0),a:get3(3)},
+      r32_75:{h:f('F',0),a:f('C',1)},
+      r32_76:{h:f('C',0),a:f('F',1)},
+      r32_77:{h:f('I',0),a:get3(5)},
+      r32_78:{h:f('E',1),a:f('I',1)},
+      r32_79:{h:f('A',0),a:get3(0)},
+      r32_80:{h:f('L',0),a:get3(7)},
+      r32_81:{h:f('D',0),a:get3(2)},
+      r32_82:{h:f('G',0),a:get3(4)},
+      r32_83:{h:f('K',1),a:f('L',1)},
+      r32_84:{h:f('H',0),a:f('J',1)},
+      r32_85:{h:f('B',0),a:get3(1)},
+      r32_86:{h:f('J',0),a:f('H',1)},
+      r32_87:{h:f('K',0),a:get3(6)},
+      r32_88:{h:f('D',1),a:f('G',1)},
+    };
+    [['r16_1','r32_74','r32_77'],['r16_2','r32_73','r32_75'],
+     ['r16_3','r32_76','r32_78'],['r16_4','r32_79','r32_80'],
+     ['r16_5','r32_83','r32_84'],['r16_6','r32_81','r32_82'],
+     ['r16_7','r32_86','r32_88'],['r16_8','r32_85','r32_87']].forEach(([id,m1,m2])=>{
+      t[id]={h:w(m1,t[m1].h,t[m1].a), a:w(m2,t[m2].h,t[m2].a)};
+    });
+    [['qf_1','r16_1','r16_2'],['qf_2','r16_5','r16_6'],
+     ['qf_3','r16_3','r16_4'],['qf_4','r16_7','r16_8']].forEach(([id,m1,m2])=>{
+      t[id]={h:w(m1,t[m1].h,t[m1].a), a:w(m2,t[m2].h,t[m2].a)};
+    });
+    const sfL={};
+    [['sf_1','qf_1','qf_2'],['sf_2','qf_3','qf_4']].forEach(([id,m1,m2])=>{
+      const wt1=w(m1,t[m1].h,t[m1].a), lt1=t[m1].h.n===wt1.n?t[m1].a:t[m1].h;
+      const wt2=w(m2,t[m2].h,t[m2].a), lt2=t[m2].h.n===wt2.n?t[m2].a:t[m2].h;
+      t[id]={h:wt1,a:wt2}; sfL[id]={l1:lt1,l2:lt2};
+    });
+    const wSF1=w('sf_1',t['sf_1'].h,t['sf_1'].a), wSF2=w('sf_2',t['sf_2'].h,t['sf_2'].a);
+    const lSF1=wSF1.n===t['sf_1'].h.n?sfL['sf_1'].l1:sfL['sf_1'].l2;
+    const lSF2=wSF2.n===t['sf_2'].h.n?sfL['sf_2'].l1:sfL['sf_2'].l2;
+    t['final']={h:wSF1,a:wSF2}; t['third']={h:lSF1,a:lSF2};
+    return t;
+  }
+  const koTeams = resolveKOTeams(st, ko, kq);
+
   let koHtml = '';
   KO_ROUNDS.forEach(round => {
     koHtml += `<div class="round-label">${round.label}</div>`;
     round.ids.forEach(id => {
       const sc = ko[id] || {};
-      const h = sc.h !== undefined ? sc.h : '–';
-      const a = sc.a !== undefined ? sc.a : '–';
+      const hSc = sc.h !== undefined ? sc.h : '–';
+      const aSc = sc.a !== undefined ? sc.a : '–';
       const label = round.labels[id] || id;
-      let winner = '';
+      const teams = koTeams[id] || {h:{n:'TBD',f:'🏳'}, a:{n:'TBD',f:'🏳'}};
+      const hTeam = teams.h || {n:'TBD',f:'🏳'};
+      const aTeam = teams.a || {n:'TBD',f:'🏳'};
+      let winnerTeam = '';
       if (sc.h !== undefined && sc.a !== undefined) {
-        if (sc.h > sc.a) winner = 'H';
-        else if (sc.a > sc.h) winner = 'A';
+        if (sc.h > sc.a) winnerTeam = `✅ ${getFlag(hTeam.n)} ${hTeam.n}`;
+        else if (sc.a > sc.h) winnerTeam = `✅ ${getFlag(aTeam.n)} ${aTeam.n}`;
         else {
           const q = kq[id];
-          winner = q === 'h' ? 'H (Q)' : q === 'a' ? 'A (Q)' : 'DRAW';
+          const qt = q==='h' ? hTeam : q==='a' ? aTeam : null;
+          winnerTeam = qt ? `✅ ${getFlag(qt.n)} ${qt.n} (Q)` : '🤝 DRAW';
         }
       }
       koHtml += `<div class="ko-match-row">
         <span class="ko-num">${label}</span>
-        <span class="ko-score">${h}</span>
+        <span class="ko-team">${getFlag(hTeam.n)} ${hTeam.n}</span>
+        <span class="ko-score">${hSc}</span>
         <span class="m-sep">:</span>
-        <span class="ko-score">${a}</span>
-        ${winner ? `<span class="ko-winner">→ ${winner}</span>` : ''}
+        <span class="ko-score">${aSc}</span>
+        <span class="ko-team" style="text-align:right">${aTeam.n} ${getFlag(aTeam.n)}</span>
+        ${winnerTeam ? `<span class="ko-winner">${winnerTeam}</span>` : ''}
       </div>`;
     });
   });

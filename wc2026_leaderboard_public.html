@@ -90,6 +90,12 @@ body{background:#080010;font-family:'Roboto',sans-serif;min-height:100vh;}
     <div class="legend-item"><span class="legend-pts p0">0</span> Wrong</div>
   </div>
 
+  <div style="margin-bottom:12px;">
+    <input id="searchBox" type="text" placeholder="🔍 Search player..." oninput="filterLeaderboard()"
+      style="width:100%;box-sizing:border-box;background:#0d0020;border:1px solid #7700ff55;
+             color:#e0c0ff;font-size:14px;padding:10px 14px;border-radius:8px;outline:none;
+             font-family:'Oswald',sans-serif;letter-spacing:1px;">
+  </div>
   <div id="leaderboardContent"></div>
 </div>
 
@@ -116,6 +122,9 @@ async function loadLeaderboard() {
   }
 }
 
+// Store previous ranks for change arrows
+let prevRanks = {};
+
 function renderLeaderboard(lb) {
   const content = document.getElementById('leaderboardContent');
   if (!lb.length) {
@@ -127,33 +136,74 @@ function renderLeaderboard(lb) {
   const topCls = ['top1','top2','top3'];
   const maxPts = Math.max(...lb.map(r => Number(r.total)||0), 1);
 
-  content.innerHTML = lb.map((r, i) => `
-    <div class="lb-row ${topCls[i]||''}">
-      <div class="lb-rank ${rc[i]||'rn'}">${i+1}</div>
-      <div class="lb-medal">${medals[i]||'🏅'}</div>
-      <div style="flex:1;">
-        <div class="lb-name">${r.name}</div>
-        <div class="lb-breakdown">
-          <span>⚽ GS: ${r.gsMatchPts||0}pts</span>
-          <span>📊 St: ${r.gsStandingPts||0}pts</span>
-          <span>🏆 KO: ${r.koPts||0}pts</span>
-        </div>
-        <div class="lb-breakdown" style="margin-top:3px;">
-          <span>🎯 Exact: ${(Number(r.gsExact)||0)+(Number(r.koExact)||0)}</span>
-          <span>✅ Correct: ${(Number(r.gsCorrect)||0)+(Number(r.koCorrect)||0)}</span>
-          <span>🏆 KO Winners: ${Number(r.koWinner)||0}</span>
-        </div>
-        <div class="pts-bar-wrap" style="width:100%;margin-top:4px;">
-          <div class="pts-bar">
-            <div class="pts-bar-fill" style="width:${Math.round(Number(r.total)/maxPts*100)}%"></div>
-          </div>
-        </div>
-      </div>
-      <div style="text-align:center;min-width:60px;">
-        <div class="lb-total">${r.total}</div>
-        <div style="font-size:9px;color:#7700ff;letter-spacing:1px;">POINTS</div>
-      </div>
-    </div>`).join('');
+  // Compute rank changes
+  const newRanks = {};
+  lb.forEach((r, i) => { newRanks[r.name] = i + 1; });
+
+  content.innerHTML = lb.map((r, i) => {
+    const rank = i + 1;
+    const prev = prevRanks[r.name];
+    // Rank change badge
+    let changeBadge = '';
+    if (prev !== undefined && prev !== rank) {
+      const diff = prev - rank;
+      if (diff > 0) {
+        changeBadge = '<div style="display:inline-flex;align-items:center;gap:2px;background:#003300;border:1px solid #00ff88;border-radius:4px;padding:1px 5px;margin-left:5px;vertical-align:middle;">'
+          +'<span style="color:#00ff88;font-size:10px;font-weight:700;">▲ '+diff+'</span>'
+        +'</div>';
+      } else {
+        changeBadge = '<div style="display:inline-flex;align-items:center;gap:2px;background:#330000;border:1px solid #ff4444;border-radius:4px;padding:1px 5px;margin-left:5px;vertical-align:middle;">'
+          +'<span style="color:#ff4444;font-size:10px;font-weight:700;">▼ '+Math.abs(diff)+'</span>'
+        +'</div>';
+      }
+    } else if (prev === undefined) {
+      changeBadge = '<div style="display:inline-flex;align-items:center;background:#1a0030;border:1px solid #7700ff;border-radius:4px;padding:1px 5px;margin-left:5px;vertical-align:middle;">'
+        +'<span style="color:#bb66ff;font-size:9px;font-weight:700;letter-spacing:1px;">NEW</span>'
+      +'</div>';
+    } else {
+      changeBadge = '<div style="display:inline-flex;align-items:center;background:#0d0020;border:1px solid #7700ff22;border-radius:4px;padding:1px 5px;margin-left:5px;vertical-align:middle;">'
+        +'<span style="color:#7700ff;font-size:10px;">—</span>'
+      +'</div>';
+    }
+
+    return '<div class="lb-row '+(topCls[i]||'')+'" data-name="'+r.name.toLowerCase()+'">'
+      +'<div class="lb-rank '+(rc[i]||'rn')+'" style="display:flex;align-items:center;flex-wrap:wrap;gap:2px;min-width:70px;">'+rank+changeBadge+'</div>'
+      +'<div class="lb-medal">'+(medals[i]||'🏅')+'</div>'
+      +'<div style="flex:1;">'
+        +'<div class="lb-name">'+r.name+'</div>'
+        +'<div class="lb-breakdown">'
+          +'<span>⚽ GS: '+(r.gsMatchPts||0)+'pts</span>'
+          +'<span>📊 Standings: '+(r.gsStandingPts||0)+'pts</span>'
+          +'<span>🏆 KO: '+(r.koPts||0)+'pts</span>'
+        +'</div>'
+        +'<div class="lb-breakdown" style="margin-top:3px;">'
+          +'<span>🎯 Exact: '+((Number(r.gsExact)||0)+(Number(r.koExact)||0))+'</span>'
+          +'<span>✅ Correct: '+((Number(r.gsCorrect)||0)+(Number(r.koCorrect)||0))+'</span>'
+          +'<span>🏆 KO Winners: '+(Number(r.koWinner)||0)+'</span>'
+        +'</div>'
+        +'<div class="pts-bar-wrap" style="width:100%;margin-top:4px;">'
+          +'<div class="pts-bar">'
+            +'<div class="pts-bar-fill" style="width:'+Math.round(Number(r.total)/maxPts*100)+'%"></div>'
+          +'</div>'
+        +'</div>'
+      +'</div>'
+      +'<div style="text-align:center;min-width:60px;">'
+        +'<div class="lb-total">'+r.total+'</div>'
+        +'<div style="font-size:9px;color:#7700ff;letter-spacing:1px;">POINTS</div>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+
+  // Save current ranks for next refresh
+  prevRanks = newRanks;
+}
+
+function filterLeaderboard() {
+  const q = document.getElementById('searchBox')?.value?.toLowerCase() || '';
+  document.querySelectorAll('.lb-row[data-name]').forEach(row => {
+    const name = row.getAttribute('data-name') || '';
+    row.style.display = name.includes(q) ? '' : 'none';
+  });
 }
 
 loadLeaderboard();
